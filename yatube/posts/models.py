@@ -2,11 +2,12 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
 
+from core.models import CreatedModel
 
 User = get_user_model()
 
 
-class Post(models.Model):
+class Post(CreatedModel):
     text = models.TextField(
         verbose_name='Текст',
         help_text='Введите описание поста'
@@ -17,7 +18,6 @@ class Post(models.Model):
         related_name='posts',
         verbose_name='Автор поста, постов'
     )
-    pub_date = models.DateTimeField(auto_now_add=True)
     group = models.ForeignKey(
         'Group',
         blank=True,
@@ -27,6 +27,11 @@ class Post(models.Model):
         verbose_name='Группа поста, постов',
         help_text='Выберите подходящую группу'
     )
+    image = models.ImageField(
+        'Картинка',
+        upload_to='posts/',
+        blank=True,
+    )
 
     class Meta:
         ordering = ['-pub_date']
@@ -34,7 +39,7 @@ class Post(models.Model):
         verbose_name_plural = 'Посты'
 
     def __str__(self):
-        return self.text[:settings.INTRODUCTION]
+        return self.text[:settings.OUTPUT]
 
 
 class Group(models.Model):
@@ -48,3 +53,44 @@ class Group(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class Comment(models.Model):
+    post = models.ForeignKey(
+        Post,
+        related_name='comments',
+        on_delete=models.CASCADE
+    )
+    author = models.ForeignKey(
+        User,
+        related_name='comments',
+        on_delete=models.CASCADE
+    )
+    text = models.TextField(
+        verbose_name='Текст комментария',
+        help_text='Введите текст комментария'
+    )
+    created = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата комментария'
+    )
+
+    class Meta:
+        verbose_name = 'Комментарий'
+        verbose_name_plural = 'Комментарии'
+
+    def __str__(self):
+        return self.text[:settings.INTRODUCTION]
+
+
+class Follow(models.Model):
+    user = models.ForeignKey(
+        User,
+        related_name='follower',
+        on_delete=models.CASCADE
+    )
+    author = models.ForeignKey(
+        User,
+        related_name='following',
+        on_delete=models.CASCADE
+    )
